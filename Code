@@ -1,0 +1,933 @@
+# ProtonsCode
+# -*- coding: utf-8 -*-
+"""
+Spyder Editor
+This is a temporary script file.
+"""
+from astropy.io import fits
+from matplotlib.lines import Line2D
+import numpy as np
+import math
+import sys, os
+import matplotlib.pyplot as plt
+
+
+R_earth = 6371                                # raggio della Terra in km
+pM = 0.93827208816                            # massa protone (GeV/c^2)
+TP0 = 0.93827208816                           # energia a riposo protone (GeV)
+
+# ---------- ALCARAZ ----------
+"""
+phi = 0.55
+h = 380
+                                     
+theta_min = 0
+theta_max = 0.2
+
+theta = 0.1
+#theta = 0.25
+#theta = 0.35
+#theta = 0.45
+#theta = 0.55
+#theta = 0.65
+#theta = 0.75
+#theta = 0.85
+#theta = 0.95
+#theta = 1.05
+"""
+
+# ---------- SANUKI ----------
+"""
+phi = 0.65
+h = 37.0
+theta = 1.14                                  # theta_m Lynn Lake approx (rad)
+#theta_check = 1.1742                          # theta t.c Dlt% = 3%
+#theta1990 = 1.1440633                         # theta_m Lynn Lake 1990
+#theta1995 = 1.142318                          # theta_m Lynn Lake 1995
+#theta2000 = 1.1397                            # theta_m Lynn Lake 2000
+"""
+
+# ---------- MENN ----------
+"""
+phi = 0.75
+phiMup = 0.8
+phiMdown = 0.7                                                                           
+h = 36.0                                        
+theta = 1.14
+"""
+
+# ---------- BOEZIO ----------
+"""
+phi = 0.6
+h = 37.05
+hUp = 38.1
+hDown = 36                                    
+theta = 1.14
+"""
+
+# ---------- XRISM ----------
+#"""
+phi = 0.55
+h = 550
+#hUp = 600
+#hDown = 500
+theta = 0.1
+theta_min = 0
+theta_max = 0.2
+#"""
+
+# ---------- CHECK_LATITUDINI ----------
+"""  
+
+#theta_highLat = 1.308996939
+#theta_highLat_controlUP = 1.348266847
+#theta_highLat_controlDWN = 1.269727031
+
+theta_middleLat1 = 0.4090954804
+theta_middleLat1_controlUP = 0.4213683448
+theta_middleLat1_controlDWN = 0.396822616
+theta_middleLat2 = 0.5345305153
+theta_middleLat2_controlUP = 0.5505664308
+theta_middleLat2_controlDWN = 0.5184945999                                     
+theta_middleLat3 = 0.6595057868
+theta_middleLat3_controlUP = 0.6792909604
+theta_middleLat3_controlDWN = 0.6397206132
+theta_middleLat4 = 0.7849949601
+theta_middleLat4_controlUP = 0.8085448089
+theta_middleLat4_controlDWN = 0.7614451113
+theta_middleLat5 = 0.9104299958
+theta_middleLat5_controlUP = 0.9377428956
+theta_middleLat5_controlDWN = 0.8831170959
+theta_middleLat6 = 1.036322372
+theta_middleLat6_controlUP = 1.067412044
+theta_middleLat6_controlDWN = 1.005232701
+theta_middleLat7 = 1.161705695
+theta_middleLat7_controlUP = 1.196556865
+theta_middleLat7_controlDWN = 1.126854524
+
+theta_middleLat_check1 = 0.9599310886 #55.0°
+theta_middleLat_check1UP = 0.9887290213 #56.65°
+theta_middleLat_check1DWN = 0.9311331559 #53.35°
+theta_middleLat_check2 = 0.9948376736 #57.0°
+theta_middleLat_check2UP = 1.024682804 #58.71°
+theta_middleLat_check2DWN = 0.9649925434 #55.29°
+
+
+#theta_lowLat1 = 0.15
+#theta_lowLat1_controlUP = 0.1545
+#theta_lowLat1_controlDWN = 0.1455                            
+#theta_lowLat2 = 0.2617993878
+#theta_lowLat2_controlUP = 0.2696533694
+#theta_lowLat2_controlDWN = 0.2539454062
+#theta_lowLat3 = 0.35
+#theta_lowLat3_controlUP = 0.3605
+#theta_lowLat3_controlDWN = 0.3395
+"""      
+
+lista0Al = []
+lista1Al = []
+lista2Al = []
+lista3Al = []
+lista4Al = []
+lista5Al = []
+lista6Al = []
+lista7Al = []
+lista8Al = []
+lista9Al = []
+lista10Al = []
+lista11Al = []
+lista0SK = []
+lista1SK = []
+lista2SK = []
+lista3SK = []
+lista4SK = []
+lista5SK = []
+lista6SK = []
+lista7SK = []
+lista0MENN = []
+lista1MENN = []
+lista2MENN = []
+lista3MENN = []
+lista4MENN = []
+lista5MENN = []
+lista6MENN = []
+lista7MENN = []
+lista8MENN = []
+lista0BO = []
+lista1BO = []
+lista2BO = []
+lista3BO = []
+lista4BO = []
+lista5BO = []
+lista6BO = []
+listaxLatCheck = []                
+
+g10_values=[31543, 31464, 31354, 31212, 31060, 30926, 30805, 30715, 30654, 30594, 30554, 30500, 30421, 30334, 30220, 30100, 29992, 29873, 29775, 29692, 29619.4, 29554.63, 29496.57, 29442.0]
+g10p_values=[31543, 31464, 31354, 31212, 31060, 30926, 30805, 30715, 30654, 30594, 30554, 30500, 30421, 30334, 30220, 30100, 29992, 29873, 29775, 29692, 29619.4, 29554.63, 29496.57, 29442.0, 29275.4, 29184.25, 29093.1, 29001.95, 28910.8, 28819.65]                                    # GV
+
+h_test = np.linspace(400,600,20)                       # ascisse altitudine
+l_test = np.linspace(0,50,20)                          # ascisse latitudine
+g = np.linspace(1900,2015,24)                     # ascisse anno
+gp = np.linspace(1900,2045,30)                     # ascisse anno previsione
+T = np.linspace(0,200,10000)                        # GeV
+T0 = np.linspace(1,200,10000)
+
+
+def geocutoff_cumani(h_test):                         # cutoff a latitudine costante
+    l_const = 0*np.pi/180                        # latitudine 0 ° in radianti
+    h_const = 550                                # km
+    return ((11.9*((R_earth+h_const)/(R_earth+h_test))**2)*np.cos(l_const)**4)
+
+def geocutoff_cumani2(l_test):
+    l_rad = l_test*np.pi/180
+    return (11.9*np.cos(l_rad)**4)               # equazione alleggerita ((num/den) = 1)
+
+def g10(g):
+    g10_values=[31543, 31464, 31354, 31212, 31060, 30926, 30805, 30715, 30654, 30594, 30554, 30500, 30421, 30334, 30220, 30100, 29992, 29873, 29775, 29692, 29619.4, 29554.63, 29496.57, 29442.0]
+    return (g10_values)
+
+def g10_var(g):
+    g10_var=[110, 110, 142, 152, 134, 121, 90, 61, 60, 40, 54, 54, 79, 87, 114, 120, 108, 119, 98, 83, 72.6, 64.77, 58.06, 54.57]
+    return (g10_var)
+
+def g10p(gp):
+    g10p_values=[31543, 31464, 31354, 31212, 31060, 30926, 30805, 30715, 30654, 30594, 30554, 30500, 30421, 30334, 30220, 30100, 29992, 29873, 29775, 29692, 29619.4, 29554.63, 29496.57, 29442.0, 29378, 29308, 29217, 29091, 28956, 28820]
+    return (g10p_values)
+    
+def proton_flux_Mizuno(T, h, theta, phi):
+    A = 23.9                                       # counts s^-1 m^-2 sr^-1 MeV^-1
+    a = 2.83
+    r = 12
+    T1 = T+phi
+    #Rcut = (14.9*(1+(h/R_earth))**(-2))*(math.cos(theta))**4
+    Rcut = (14.0*(1+(h/R_earth))**(-2))*(math.cos(theta))**4 #PREVISIONE FLUSSO
+    Rek = ((T1**2)+2*T1*TP0)**(0.5)
+    #Rcut = 4.46
+    Unmoduled_flux = A*(Rek)**(-a)
+    Solar_mod_n = ((T+pM)**2)-(pM)**2
+    Solar_mod_d = ((T+pM+phi)**2)-(pM)**2
+    Solar_modulation = Solar_mod_n/Solar_mod_d
+    Geomag_modulation = 1/(1+(Rek/Rcut)**(-r))
+    #print (Rcut)
+    #print (Geomag_modulation)
+    flux = (Unmoduled_flux*Solar_modulation*Geomag_modulation)
+    print (Unmoduled_flux*Solar_modulation*Geomag_modulation)
+    return (flux)
+
+def proton_flux_Mizuno_check(array0Al, h, theta, phi):
+    A = 23.9                                       # counts s^-1 m^-2 sr^-1 MeV^-1
+    a = 2.83
+    r = 12
+    T1 = array0Al+phi
+    #Rcut = (14.9*(1+(h/R_earth))**(-2))*(math.cos(theta))**4
+    Rcut = (14.0*(1+(h/R_earth))**(-2))*(math.cos(theta))**4 #PREVISIONE FLUSSO
+    Rek = ((T1**2)+2*T1*TP0)**(0.5)
+    #Rcut = 4.46
+    Unmoduled_flux = A*(Rek)**(-a)
+    Solar_mod_n = ((array0Al+pM)**2)-(pM)**2
+    Solar_mod_d = ((array0Al+pM+phi)**2)-(pM)**2
+    Solar_modulation = Solar_mod_n/Solar_mod_d
+    Geomag_modulation = 1/(1+(Rek/Rcut)**(-r))
+    #print (Rcut)
+    #print (Geomag_modulation)
+    flux = (Unmoduled_flux*Solar_modulation*Geomag_modulation)
+    print (Unmoduled_flux*Solar_modulation*Geomag_modulation)
+    return (flux)
+
+def delta_flusso_flussoMIN(array1Al, array3Al, array4Al, array6Al, array8Al, array10Al):
+    
+    delta_misura_flussoMID = array1Al - array4Al                         # discrepanza fra dati e modello (per ciascun bin) 
+    delta_misura_flussoMIN = array4Al - array6Al
+    delta_errore = (array3Al**2+array8Al**2)**(0.5)            # errore sulla discrepanza
+    print_err_min = array10Al
+
+    #print (array4Al)
+    #print (array6Al)
+    #print (delta_misura_flussoMID)
+    #print (delta_misura_flussoMIN)
+    #print (delta_errore)
+    print (print_err_min)
+    return (delta_errore)
+
+def delta_flusso_flussoMAX(array1Al, array3Al, array4Al, array7Al, array9Al, array11Al):
+    
+    delta_misura_flussoMID = array1Al - array4Al
+    delta_misura_flussoMAX = array4Al - array7Al                         # discrepanza fra dati e modello (per ciascun bin) 
+    delta_errore = (array3Al**2+array9Al**2)**(0.5)            # errore sulla discrepanza
+    print_err_max = array11Al
+
+    #print (array4Al)
+    #print (array7Al)
+    #print (delta_misura_flussoMID)
+    #print (delta_misura_flussoMAX)
+    #print (delta_errore)
+    print (print_err_max)
+    return (delta_errore)
+
+def prova(array1Al, array5Al):
+    discrepanze = (array5Al/array1Al)*100
+    print (discrepanze)
+    return (discrepanze)
+
+def provamax(array2Al, array3Al):
+    discrepanze = array2Al-array1Al
+    print (discrepanze)
+    return (discrepanze)
+
+def provamin(array2Al, array4Al):
+    discrepanze = array1Al-array3Al
+    print (discrepanze)
+    return (discrepanze)
+
+def proton_flux_Mizuno_check1(array0Al, hUP, theta, phi):
+    A = 23.9                                       
+    a = 2.83
+    r = 12
+    T1 = array0Al+phi
+    Rcut = (14.9*(1+(h/R_earth))**(-2))*(math.cos(theta))**4
+    Rek = ((T1**2)+2*T1*TP0)**(0.5)
+    #Rcut = 4.46
+    Unmoduled_flux = A*(Rek)**(-a)
+    Solar_mod_n = ((array0Al+pM)**2)-(pM)**2
+    Solar_mod_d = ((array0Al+pM+phi)**2)-(pM)**2
+    Solar_modulation = Solar_mod_n/Solar_mod_d
+    Geomag_modulation = 1/(1+(Rek/Rcut)**(-r))
+    #print (Rcut)
+    #print (Geomag_modulation)
+    print (Unmoduled_flux*Solar_modulation*Geomag_modulation*100)/(100-4)
+    return (Unmoduled_flux*Solar_modulation*Geomag_modulation*100)/(100-4)
+
+def proton_flux_Mizuno_check2(arrayxBO, hDOWN, theta, phi):
+    A = 23.9                                       
+    a = 2.83
+    r = 12
+    T1 = arrayxBO+phi
+    Rcut = (14.9*(1+(h/R_earth))**(-2))*(math.cos(theta))**4
+    Rek = ((T1**2)+2*T1*TP0)**(0.5)
+    #Rcut = 4.46
+    Unmoduled_flux = A*(Rek)**(-a)
+    Solar_mod_n = ((arrayxBO+pM)**2)-(pM)**2
+    Solar_mod_d = ((arrayxBO+pM+phi)**2)-(pM)**2
+    Solar_modulation = Solar_mod_n/Solar_mod_d
+    Geomag_modulation = 1/(1+(Rek/Rcut)**(-r))
+    #print (Rcut)
+    #print (Geomag_modulation)
+    print (Unmoduled_flux*Solar_modulation*Geomag_modulation*100)/(100-4)
+    return (Unmoduled_flux*Solar_modulation*Geomag_modulation*100)/(100-4)
+
+#---------------------- GRAFICO LATITUDINE ALTITUDINE CUT-OFF -----------------
+"""
+fig, ax1 = plt.subplots()
+ax1.set_xlabel('Altitude / km', color = 'firebrick')
+ax1.set_ylabel('Rcutoff / GV')
+line1, = ax1.plot(h_test, geocutoff_cumani(h_test), '--', color = 'firebrick', label = 'Geomagnetic Latitude = 0$^{\circ}$')
+ax1.tick_params(axis='x', labelcolor = 'firebrick')
+
+ax2 = ax1.twiny()
+color_blue = 'tab:blue'
+ax2.set_xlabel('Geomagnetic Latitude / $^{\circ}$', color = color_blue)
+line2, = ax2.plot(l_test, geocutoff_cumani2(l_test), color = color_blue, label = 'Altitude = 550 km')
+ax2.tick_params(axis='x', labelcolor = color_blue)
+ax1.grid(axis = 'y')
+ax1.legend((line1, line2), ('Geomagnetic Latitude = 0$^{\circ}$', 'Altitude = 550 km'))
+fig.tight_layout()                                # facoltativo: allunga un pelo il grafico
+plt.show()
+fig.savefig('tesi\Cut-off_latitude_altitude.png', bbox_inches='tight')
+"""
+
+#------------------------- PREVISIONE CAMPO MAGNETICO -------------------------
+"""
+z = np.polyfit(g, g10_values, 1) 
+p = np.poly1d(z)
+
+figg, ax1g = plt.subplots()
+line1, = ax1g.plot(g, g10(g), color = 'blue', linewidth = '2.3')
+plt.plot(g, g10_values, 'o', g, p(g))
+ax1g.set_xlabel('Year')
+ax1g.set_ylabel('g$_{1}^{0}$ value (nT)')
+ax1g.tick_params(axis='x')
+#ax1g.legend(loc=1)
+
+ax2g = ax1g.twinx()
+line2, = ax2g.plot(g, g10_var(g), color = 'red', label = 'g$_{1}^{0}$ variations')
+ax2g.set_ylabel('g$_{1}^{0}$ variation (nT)')
+figg.tight_layout()
+ax1g.grid(axis = 'x')
+ax1g.grid(axis = 'y')
+ax2g.legend(loc=1)
+plt.show()
+#"figg.savefig('tesi\g10 values and variations')"
+
+
+figgp, ax1gp = plt.subplots()                                 #grafico previsioni g10, attiva e disattiva x cambiare i colori
+color_green = 'tab:blue'
+line1, = ax1gp.plot(gp, g10p_values, color = 'green')
+ax1gp.tick_params(axis='x')
+ax1gp.set_xlabel('Year')
+ax1gp.set_ylabel('g$_{1}^{0}$ value (nT)')
+ax1gp.tick_params(axis='x')
+ax1gp.grid(axis = 'x')
+ax1gp.grid(axis = 'y')
+plt.plot(gp, g10p_values, 'o', gp, p(gp))
+ax1gp.legend(loc=1)
+#plt.plot(gp, g10p_values, gp, p(gp))
+
+ax2gp = ax1gp.twiny()
+ax2gp.set_xlabel('Year')
+ax2gp.tick_params(axis='x')
+line2, = ax2gp.plot(gp, g10p_values, 'o', color = color_green, label = 'g$_{1}^{0}$ values')
+ax2gp.legend(loc=1)
+#print (g10p_values)
+#figgp.savefig('tesi\g10 values and forecast')
+"""
+
+#----------------------------------- ALCARAZ ----------------------------------
+#"""
+#fileAl = open("DatiALCARAZ_04-05_downward.txt", "r")
+#fileAl = open("DatiALCARAZ_04-05_downward_primary.txt", "r")
+#fileAl = open(r'C:\Users\Matteo\Desktop\DatiALCARAZ_02--_downward_primary.txt')
+#fileAl = open(r'C:\Users\Matteo\Desktop\DatiALCARAZ_02-03_downward_primary.txt')
+#fileAl = open(r'C:\Users\Matteo\Desktop\DatiALCARAZ_03-04_downward_primary.txt')
+#fileAl = open(r'C:\Users\Matteo\Desktop\DatiALCARAZ_04-05_downward_primary.txt')
+#fileAl = open(r'C:\Users\Matteo\Desktop\DatiALCARAZ_05-06_downward_primary.txt')
+#fileAl = open(r'C:\Users\Matteo\Desktop\DatiALCARAZ_06-07_downward_primary.txt')
+#fileAl = open(r'C:\Users\Matteo\Desktop\DatiALCARAZ_07-08_downward_primary.txt')
+#fileAl = open(r'C:\Users\Matteo\Desktop\DatiALCARAZ_08-09_downward_primary.txt')
+#fileAl = open(r'C:\Users\Matteo\Desktop\DatiALCARAZ_09-1_downward_primary.txt')
+#fileAl = open(r'C:\Users\Matteo\Desktop\DatiALCARAZ_1++_downward_primary.txt')
+#fileAl = open(r'C:\Users\Matteo\Desktop\XRISM.txt')
+fileAl = open(r'C:\Users\Matteo\Desktop\XRISM2.txt')
+#fileAl = open(r'C:\Users\Matteo\Desktop\XRISM_realistico.txt')
+#fileAl = open(r'C:\Users\Matteo\Desktop\XRISM_medio.txt')
+
+for line in fileAl:
+        line = line.strip()
+        if not line.startswith("#"):
+            columns = line.split()     
+            columns[0] = float(columns[0])     
+            columns[1] = float(columns[1])   
+            columns[2] = float(columns[2])
+            columns[3] = float(columns[3])
+            columns[4] = float(columns[4])   
+            columns[5] = float(columns[5])
+            columns[6] = float(columns[6])
+            #columns[7] = float(columns[7])
+            #columns[8] = float(columns[8])
+            #columns[9] = float(columns[9])
+            #columns[10] = float(columns[10])
+            #columns[11] = float(columns[11])
+                
+            lista0Al.append(columns[0])     
+            lista1Al.append(columns[1])
+            lista2Al.append(columns[2])
+            lista3Al.append(columns[3])
+            lista4Al.append(columns[4])
+            lista5Al.append(columns[5])
+            lista6Al.append(columns[6])
+            #lista7Al.append(columns[7])
+            #lista8Al.append(columns[8])
+            #lista9Al.append(columns[9])
+            #lista10Al.append(columns[10])
+            #lista11Al.append(columns[11])
+
+fileAl.close()
+
+array0Al = np.array(lista0Al)     
+array1Al = np.array(lista1Al)
+array2Al = np.array(lista2Al)
+array3Al = np.array(lista3Al)
+array4Al = np.array(lista4Al)
+array5Al = np.array(lista5Al)
+array6Al = np.array(lista6Al)
+array7Al = np.array(lista7Al)
+array8Al = np.array(lista8Al)
+array9Al = np.array(lista9Al)
+array10Al = np.array(lista10Al)
+array11Al = np.array(lista11Al)
+
+figTestAl = plt.figure()
+figTestAl.show()
+axfigTestAl = figTestAl.add_subplot(111)
+axfigTestAl.set_xscale("log")
+axfigTestAl.set_yscale("log")
+#axfigTestAl.set_title("title", fontsize=12)
+axfigTestAl.set_xlim(0.06, 270)
+axfigTestAl.set_ylim(0.000004, 60)
+#axfigTestAl.set_xlim(1, 270)                             #zoom asse x XRISM
+#axfigTestAl.set_ylim(0.000004, 1)                        #zoom asse y XRISM
+#axfigTestAl.set_xlim(0.055, 250)                         #scala x per residui
+#axfigTestAl.set_ylim(0.035, 4500)                        #scala y per residui
+axfigTestAl.set_xlabel('Energy (GeV)', color = 'k')
+axfigTestAl.set_ylabel('Flux (c s$^-$$^1$ m$^-$$^2$ sr$^-$$^1$ MeV$^-$$^1$)', color = 'k')
+#axfigTestAl.set_ylabel('Residuals (%)', color = 'k')   #asse y per residui
+#axfigTestAl.plot(array0Al, array1Al, 'o', color = 'b', mew = 0.1, label=u'0.4 ≤ \u03B8$_{M}$ < 0.5')
+#axfigTestAl.plot(array0Al, proton_flux_Mizuno_check(array0Al, h, theta, phi), 'o', color = 'b', mew = 0.1, label='Mizuno model')
+
+#axfigTestAl.errorbar(array0Al, array1Al, xerr=array2Al, yerr=array3Al, fmt='o', color = 'red', mew = 0.1, label=u'0.4 ≤ \u03B8$_{M}$ < 0.5')
+#axfigTestAl.plot(T, proton_flux_Mizuno(T, h, theta, phi), color = 'b', linewidth = '2', label='Proton Flux')
+
+#axfigTestAl.errorbar(array0Al, array1Al, xerr=array2Al, yerr=array3Al, fmt='o', color = 'red', mew = 0.1, label=u'Data for 0 ≤ \u03B8$_{M}$ < 0.2 rad (0° ≤ \u03B8$_{M}$ < ~11.5°)')
+#axfigTestAl.plot(T, proton_flux_Mizuno(T, h, theta, phi), color = 'b', label=u'Model for 0 ≤ \u03B8$_{M}$ < 0.2 rad (0° ≤ \u03B8$_{M}$ < ~11.5°)')
+#axfigTestAl.plot(T, proton_flux_Mizuno(T, h, theta_max, phi), '--', color = 'b')
+#axfigTestAl.plot(T, proton_flux_Mizuno(T, h, theta_min, phi), '--', color = 'b')
+#axfigTestAl.fill_between(T, proton_flux_Mizuno(T, h, theta_max, phi), proton_flux_Mizuno(T, h, theta_min, phi), color='gold', alpha=1)
+
+#axfigTestAl.plot(T, proton_flux_Mizuno(T, h, theta, phi), color = 'darkorange', label=u'Model for 0 ≤ \u03B8$_{M}$ < 0.2 rad (0° ≤ \u03B8$_{M}$ < ~11.5°)')
+#axfigTestAl.plot(T, proton_flux_Mizuno(T, h, theta_max, phi), '--', color = 'skyblue')
+#axfigTestAl.plot(T, proton_flux_Mizuno(T, h, theta_min, phi), '--', color = 'skyblue')
+#axfigTestAl.fill_between(T, proton_flux_Mizuno(T, h, theta_max, phi), proton_flux_Mizuno(T, h, theta_min, phi), color='gold', alpha=1)
+#axfigTestAl.plot(array0Al, provamax(array1Al, array2Al), '--', color = 'skyblue')
+#axfigTestAl.plot(array0Al, provamin(array1Al, array3Al), '--', color = 'skyblue')
+
+axfigTestAl.plot(array0Al, array2Al, color = 'darkorange', label=u'Model for \u03B8$_{M}$ = 0.1 rad (\u03B8$_{M}$ = ~5.7°)')
+axfigTestAl.plot(array0Al, array3Al, '--', color = 'darkorange')
+axfigTestAl.plot(array0Al, array4Al, '--', color = 'darkorange')
+axfigTestAl.fill_between(array0Al, array3Al, array4Al, color='gold', alpha=1)
+
+#axfigTestAl.plot(array0Al, array3Al, '--', color = 'skyblue')
+#axfigTestAl.plot(array0Al, array4Al, '--', color = 'skyblue')
+#axfigTestAl.errorbar(array0Al, array2Al, xerr=array1Al, yerr=[array6Al, array5Al], fmt='o', color = 'darkorange', mew = 0.1)
+#axfigTestAl.plot(T, proton_flux_Mizuno(T, h, theta, phi), color = 'darkorange', label=u'Model for \u03B8$_{M}$ = 0.1 rad (\u03B8$_{M}$ = ~5.7°)')
+
+#axfigTestAl.plot(array0Al, proton_flux_Mizuno_check(array0Al, h, theta_max, phi), '--', color = 'skyblue')
+#axfigTestAl.plot(array0Al, proton_flux_Mizuno_check(array0Al, h, theta_min, phi), '--', color = 'skyblue')
+#axfigTestAl.fill_between(array0Al, proton_flux_Mizuno_check(array0Al, h, theta_max, phi), proton_flux_Mizuno(array0Al, h, theta_min, phi), color='gold', alpha=1)
+#axfigTestAl.plot(array0Al, provamax(array2Al, array3Al), '--', color = 'skyblue')
+#axfigTestAl.plot(array0Al, provamin(array2Al, array4Al), '--', color = 'skyblue')
+
+#axfigTestAl.plot(delta_flusso_flussoMIN(array1Al, array3Al, array4Al, array6Al, array8Al, array10Al), 'o', color = 'g', mew = 0.1, label='0.45 min')
+#axfigTestAl.plot(delta_flusso_flussoMAX(array1Al, array3Al, array4Al, array7Al, array9Al, array11Al), 'o', color = 'r', mew = 0.1, label='0.45 max')
+
+#axfigTestAl.errorbar(array0Al, (array5Al/array1Al)*100, xerr=array2Al, yerr=[(array10Al/array1Al)*100,(array11Al/array1Al)*100], fmt='o', color = 'red', mew = 0.1, label=u'Discrepancies % for 1.0 ≤ \u03B8$_{M}$ ≤ 1.1 rad ($\sim$57.3$^\circ$ ≤ \u03B8$_{M}$ ≤ $\sim$63.0$^\circ$)')     #label=u'1.0 ≤ \u03B8$_{M}$ ≤ 1.1'
+#axfigTestAl.errorbar(array0Al, (array5Al/array1Al)*100, fmt='-', color = 'red', mew = 0.1)
+
+#axfigTestAl.plot(array0Al, prova(array1Al, array5Al), color = 'b')
+#axfigTestAl.plot(array0Al, provamin(array1Al, array6Al), color = 'b')
+#axfigTestAl.plot(array0Al, provamax(array1Al, array7Al), color = 'b')
+
+axfigTestAl.set_axisbelow(True)
+axfigTestAl.grid(which = 'major', linestyle = '-', linewidth = '0.3', color = 'k')
+axfigTestAl.grid(which = 'minor', linestyle = '-', linewidth = '0.2', color = 'k')
+
+axfigTestAl.minorticks_on()
+axfigTestAl.tick_params(axis='x', labelcolor = 'k')
+
+axfigTestAl.tick_params(which='both', # Options for both major and minor ticks
+                top='False', # turn off top ticks
+                left='True', # turn off left ticks
+                right='False',  # turn off right ticks
+                bottom='True')
+plt.legend(loc=1, prop={'size': 8.0})
+#"""
+
+#------------------------------------------------------------------------------
+"""
+figDltAl = plt.figure()
+figDltAl.show()
+axfigDltAl = figDltAl.add_subplot(111)
+axfigDltAl.set_xlabel('Energy (GeV)', color = 'k')
+axfigDltAl.set_ylabel('Discrepancy (%)', color = 'k')
+axfigDltAl.plot(arrayxAl_0, arraytAl_0, color = 'peru', mew = 0.5, label=u'0.2 ≤ \u03B8$_{M}$ < 0.3')
+axfigDltAl.plot(arrayxAl_0, arraytAl_1, color = 'coral', mew = 0.5, label=u'0.4 ≤ \u03B8$_{M}$ < 0.5')
+axfigDltAl.plot(arrayxAl_0, arraytAl_2, color = 'royalblue', mew = 0.5, label=u'0.7 ≤ \u03B8$_{M}$ < 0.8')
+axfigDltAl.plot(arrayxAl_0, arraytAl_3, color = 'indigo', mew = 0.5, label=u'0.9 ≤ \u03B8$_{M}$ < 1.0')
+axfigDltAl.plot(arrayxAl_0, arraytAl_4, '-', linewidth = '1.5', color = 'g')
+axfigDltAl.plot(arrayxAl_0, arraytAl_5, '-', linewidth = '1.5', color = 'r')
+axfigDltAl.tick_params(axis='x', labelcolor = 'k')
+
+axfigDltAl.set_axisbelow(True)
+axfigDltAl.grid(which = 'major', linestyle = '-', linewidth = '0.3', color = 'k')
+axfigDltAl.grid(which = 'minor', linestyle = '-', linewidth = '0.2', color = 'k')
+
+axfigDltAl.minorticks_on()
+
+axfigDltAl.tick_params(which='both', # Options for both major and minor ticks
+                top='False', # turn off top ticks
+                left='True', # turn off left ticks
+                right='False',  # turn off right ticks
+                bottom='True')
+plt.legend(loc=1, prop={'size': 9})
+"""
+
+
+
+#---------------------------------- SANUKI ------------------------------------
+"""
+fileSK = open(r'C:\Users\Matteo\Desktop\DatiSanuki.txt')
+for line in fileSK:
+        line = line.strip()
+        if not line.startswith("#"):
+            columns = line.split()     
+            columns[0] = float(columns[0])     
+            columns[1] = float(columns[1])
+            columns[2] = float(columns[2])
+            columns[3] = float(columns[3])
+            columns[4] = float(columns[4])     
+            columns[5] = float(columns[5])
+            columns[6] = float(columns[6])
+            columns[7] = float(columns[7])
+                
+            lista0SK.append(columns[0])     
+            lista1SK.append(columns[1])
+            lista2SK.append(columns[2])
+            lista3SK.append(columns[3])
+            lista4SK.append(columns[4])     
+            lista5SK.append(columns[5])
+            lista6SK.append(columns[6])
+            lista7SK.append(columns[7])
+
+fileSK.close()
+
+array0SK = np.array(lista0SK)     
+array1SK = np.array(lista1SK)
+array2SK = np.array(lista2SK)
+array3SK = np.array(lista3SK)
+array4SK = np.array(lista4SK)     
+array5SK = np.array(lista5SK)
+array6SK = np.array(lista6SK)
+array7SK = np.array(lista7SK)
+
+figTestSK = plt.figure()
+figTestSK.show()
+axfigTestSK = figTestSK.add_subplot(111)
+axfigTestSK.set_xscale("log")
+axfigTestSK.set_yscale("log")
+#axfigTestSK.set_xlim(0.1, 250)                         #scala x per residui
+#axfigTestSK.set_ylim(0.3, 150)                         #scala y per residui
+axfigTestSK.set_xlabel('Energy (GeV)', color = 'k')
+#axfigTestSK.set_ylabel('Flux (c s$^-$$^1$ m$^-$$^2$ sr$^-$$^1$ MeV$^-$$^1$)', color = 'k')
+#axfigTestSK.set_ylabel('Residuals (%)', color = 'k')   #asse y per residui
+#axfigTestSK.plot(arrayxSK, arrayySK, 'o', color = 'deepskyblue', mew = 0.5, label='Sanuki et al.')
+axfigTestSK.plot(T, proton_flux_Mizuno(T, h, theta, phi), color = 'b', linewidth = '2', label='Model')
+#axfigTestSK.plot(T, proton_flux_Mizuno_controllo(T, h, theta_check, phi), color = 'indigo', label='Mizuno model check')
+#axfigTestSK.plot(T, proton_flux_Mizuno1990(T, h, theta1990, phi), color = 'darkorange', label='Mizuno model 1990')
+#axfigTestSK.plot(T, proton_flux_Mizuno1995(T, h, theta1995, phi), color = 'r', label='Mizuno model 1995')
+#axfigTestSK.plot(T, proton_flux_Mizuno2000(T, h, theta2000, phi), color = 'g', label='Mizuno model 2000')
+
+#axfigTestSK.plot(arrayxSK, proton_flux_Mizuno_check(arrayxSK, h, theta, phi), 'o', color = 'b', label='Mizuno model approx')
+#axfigTestSK.plot(arrayxSK, proton_flux_Mizuno_check_controllo(arrayxSK, h, theta_check, phi), 'o', color = 'indigo', label='Mizuno model check')
+#axfigTestSK.plot(arrayxSK, proton_flux_Mizuno_check1990(arrayxSK, h, theta1990, phi), 'o', color = 'darkorange', label='Mizuno model 1990')
+#axfigTestSK.plot(arrayxSK, proton_flux_Mizuno_check1995(arrayxSK, h, theta1995, phi), 'o', color = 'r', label='Mizuno model 1995')
+#axfigTestSK.plot(arrayxSK, proton_flux_Mizuno_check2000(arrayxSK, h, theta2000, phi), 'o', color = 'g', label='Mizuno model 2000')
+
+axfigTestSK.errorbar(array0SK, array1SK, xerr=array2SK, yerr=array3SK, fmt='o', color = 'deepskyblue', mew = 0.1, label='BESS data')
+axfigTestSK.tick_params(axis='x', labelcolor = 'k')
+
+#axfigTestSK.errorbar(array0SK, (array6SK/array1SK)*100, xerr=array2SK, yerr=(array7SK/array1SK)*100, fmt='o', color = 'deepskyblue', mew = 0.1, label=u'Discrepancies % between model and BESS data')
+#axfigTestSK.errorbar(array0SK, (array6SK/array1SK)*100, fmt='-', color = 'deepskyblue', mew = 0.1)
+
+axfigTestSK.set_axisbelow(True)
+axfigTestSK.grid(which = 'major', linestyle = '-', linewidth = '0.3', color = 'k')
+axfigTestSK.grid(which = 'minor', linestyle = '-', linewidth = '0.2', color = 'k')
+
+axfigTestSK.minorticks_on()
+
+axfigTestSK.tick_params(which='both', # Options for both major and minor ticks
+                top='False', # turn off top ticks
+                left='True', # turn off left ticks
+                right='False',  # turn off right ticks
+                bottom='True')
+
+plt.legend(loc=0, prop={'size': 8})
+"""
+
+#---------------------------------- MENN --------------------------------------
+"""
+fileMENN = open(r'C:\Users\Matteo\Desktop\DatiMENN.txt')
+for line in fileMENN:
+        line = line.strip()
+        if not line.startswith("#"):
+            columns = line.split()     
+            columns[0] = float(columns[0])     
+            columns[1] = float(columns[1])
+            columns[2] = float(columns[2])
+            columns[3] = float(columns[3])
+            columns[4] = float(columns[4])     
+            columns[5] = float(columns[5])
+            columns[6] = float(columns[6])
+            columns[7] = float(columns[7])
+            columns[8] = float(columns[8])
+                
+            lista0MENN.append(columns[0])     
+            lista1MENN.append(columns[1])
+            lista2MENN.append(columns[2])
+            lista3MENN.append(columns[3])
+            lista4MENN.append(columns[4])     
+            lista5MENN.append(columns[5])
+            lista6MENN.append(columns[6])
+            lista7MENN.append(columns[7])
+            lista8MENN.append(columns[8])
+
+fileMENN.close()
+
+array0MENN = np.array(lista0MENN)     
+array1MENN = np.array(lista1MENN)
+array2MENN = np.array(lista2MENN)
+array3MENN = np.array(lista3MENN)
+array4MENN = np.array(lista4MENN)     
+array5MENN = np.array(lista5MENN)
+array6MENN = np.array(lista6MENN)
+array7MENN = np.array(lista7MENN)
+array8MENN = np.array(lista8MENN)
+
+figTestMENN = plt.figure()
+figTestMENN.show()
+axfigTestMENN = figTestMENN.add_subplot(111)
+axfigTestMENN.set_xscale("log")
+axfigTestMENN.set_yscale("log")
+axfigTestMENN.set_xlim(0.1, 250)                         #scala x per residui
+axfigTestMENN.set_ylim(0.3, 450)                         #scala y per residui
+axfigTestMENN.set_xlabel('Energy (GeV)', color = 'k')
+#axfigTestMENN.set_ylabel('Flux (c s$^-$$^1$ m$^-$$^2$ sr$^-$$^1$ MeV$^-$$^1$)', color = 'k')
+axfigTestMENN.set_ylabel('Residuals (%)', color = 'k')   #asse y per residui
+#axfigTestMENN.plot(array0MENN, array1MENN, 'o', color = 'forestgreen', mew = 0.1, label='IMAX data')
+#axfigTestMENN.plot(T, proton_flux_Mizuno_check(T, h, theta, phi), '--', color = 'darkblue')
+#axfigTestMENN.plot(T, proton_flux_Mizuno(T, h, theta, phiMup), color = 'teal', linewidth = '2', label=u'Model for 0.7 ≤ \u03C6 ≤ 0.8')
+#axfigTestMENN.plot(T, proton_flux_Mizuno(T, h, theta, phiMdown), color = 'teal')
+#axfigTestMENN.plot(array0MENN, proton_flux_Mizuno_check(arrayoMENN, h, theta, phi), 'o', color = 'b', label='Mizuno model approx')
+#axfigTestMENN.fill_between(T, proton_flux_Mizuno(T, h, theta, phiMdown), proton_flux_Mizuno(T, h, theta, phiMup), color='teal', alpha=0.7)
+
+#axfigTestMENN.errorbar(array0MENN, array1MENN, xerr=array2MENN, yerr=array3MENN, fmt='o', color = 'forestgreen', mew = 0.1, label='IMAX data')
+#axfigTestMENN.tick_params(axis='x', labelcolor = 'k')
+
+axfigTestMENN.errorbar(array0MENN, (array6MENN/array1MENN)*100, xerr=array2MENN, yerr=[(array7MENN/array1MENN)*100, (array8MENN/array1MENN)*100], fmt='o', color = 'forestgreen', mew = 0.1, label=u'Discrepancies % between model and IMAX data')
+axfigTestMENN.errorbar(array0MENN, (array6MENN/array1MENN)*100, fmt='-', color = 'forestgreen', mew = 0.1)
+
+axfigTestMENN.set_axisbelow(True)
+axfigTestMENN.grid(which = 'major', linestyle = '-', linewidth = '0.3', color = 'k')
+axfigTestMENN.grid(which = 'minor', linestyle = '-', linewidth = '0.2', color = 'k')
+
+axfigTestMENN.minorticks_on()
+
+axfigTestMENN.tick_params(which='both', # Options for both major and minor ticks
+                top='False', # turn off top ticks
+                left='True', # turn off left ticks
+                right='False',  # turn off right ticks
+                bottom='True')
+plt.legend(loc=1, prop={'size': 8})
+"""
+
+#---------------------------------- BOEZIO ------------------------------------
+"""
+fileBO = open(r'C:\Users\Matteo\Desktop\DatiBOEZIO.txt')
+for line in fileBO:
+        line = line.strip()
+        if not line.startswith("#"):
+            columns = line.split()     
+            columns[0] = float(columns[0])     
+            columns[1] = float(columns[1])
+            columns[2] = float(columns[2])
+            columns[3] = float(columns[3])
+            columns[4] = float(columns[4])     
+            columns[5] = float(columns[5])
+            columns[6] = float(columns[6])
+                
+            lista0BO.append(columns[0])     
+            lista1BO.append(columns[1])
+            lista2BO.append(columns[2])
+            lista3BO.append(columns[3])
+            lista4BO.append(columns[4])
+            lista5BO.append(columns[5])
+            lista6BO.append(columns[6])
+
+fileBO.close()
+
+array0BO = np.array(lista0BO)     
+array1BO = np.array(lista1BO)
+array2BO = np.array(lista2BO)
+array3BO = np.array(lista3BO)
+array4BO = np.array(lista4BO)
+array5BO = np.array(lista5BO)
+array6BO = np.array(lista6BO)
+
+figTestBO = plt.figure()
+figTestBO.show()
+axfigTestBO = figTestBO.add_subplot(111)
+axfigTestBO.set_xscale("log")
+axfigTestBO.set_yscale("log")
+axfigTestBO.set_xlim(0.06, 270)
+axfigTestBO.set_ylim(0.000004, 60)
+#axfigTestBO.set_xlim(0.1, 17)                         #scala x per residui
+#axfigTestBO.set_ylim(10, 200)                         #scala y per residui
+axfigTestBO.set_xlabel('Energy (GeV)', color = 'k')
+axfigTestBO.set_ylabel('Flux (c s$^-$$^1$ m$^-$$^2$ sr$^-$$^1$ MeV$^-$$^1$)', color = 'k')
+#axfigTestBO.set_ylabel('Residuals (%)', color = 'k')   #asse y per residui
+#axfigTestBO.plot(array0BO, array1BO, 'o', color = 'indigo', mew = 0.5, label='Boezio et al.')
+axfigTestBO.plot(T, proton_flux_Mizuno(T, h, theta, phi), color = 'darkorange', label=u'Estimated flux for XRISM')
+#axfigTestBO.plot(T, proton_flux_Mizuno(T, hUp, theta, phi), color = 'orange')
+#axfigTestBO.plot(T, proton_flux_Mizuno(T, hDown, theta, phi), color = 'goldenrod', linewidth = '2')
+#axfigTestBO.fill_between(T, proton_flux_Mizuno_check(T, hDown, theta, phi), proton_flux_Mizuno(T, hUp, theta, phi), color='navajowhite', alpha=0.7)
+
+#axfigTestBO.plot(T, proton_flux_Mizuno(T, h, theta, phi), 'o', color = 'b', label='Mizuno model approx')
+
+#axfigTestBO.errorbar(array0BO, array1BO, xerr=array2BO, yerr=array3BO, fmt='o', color = 'indigo', mew = 0.1, label='CAPRICE data')
+
+#axfigTestBO.errorbar(array0BO, (array4BO/array1BO)*100, xerr=array2BO, yerr=[(array5BO/array1BO)*100, (array6BO/array1BO)*100], fmt='o', color = 'indigo', mew = 0.1, label=u'Discrepancies % between model and CAPRICE data')
+#axfigTestBO.errorbar(array0BO, (array4BO/array1BO)*100, fmt='-', color = 'indigo', mew = 0.1)
+
+axfigTestBO.set_axisbelow(True)
+axfigTestBO.grid(which = 'major', linestyle = '-', linewidth = '0.3', color = 'k')
+axfigTestBO.grid(which = 'minor', linestyle = '-', linewidth = '0.2', color = 'k')
+
+axfigTestBO.minorticks_on()
+axfigTestBO.tick_params(axis='x', labelcolor = 'k')
+axfigTestBO.tick_params(which='both', # Options for both major and minor ticks
+                top='False', # turn off top ticks
+                left='True', # turn off left ticks
+                right='False',  # turn off right ticks
+                bottom='True')
+plt.legend(loc=1, prop={'size': 8})
+"""
+
+#-------------------------------  LAT_CHECK -----------------------------------
+"""
+#fileLatCheck = open("DatiALCARAZ_02--_downward.txt", "r")
+#for line in fileLatCheck:
+#        line = line.strip()
+#        if not line.startswith("#"):
+#            columns = line.split()                   
+#            columns[0] = float(columns[0])           
+                
+#            listaxLatCheck.append(columns[0])        
+
+#fileLatCheck.close()
+
+arrayxLatCheck = np.array(listaxLatCheck)     
+figTestLatCheck = plt.figure()
+figTestLatCheck.show()
+axfigTestLatCheck = figTestLatCheck.add_subplot(111)
+axfigTestLatCheck.set_xscale("log")
+axfigTestLatCheck.set_yscale("log")
+axfigTestLatCheck.set_xlim(0.06, 270)
+axfigTestLatCheck.set_ylim(0.000004, 60)
+#axfigTestLatCheck.set_ylim(0.0004, 10) # SOLO PER CHECK ULTERIORE
+axfigTestLatCheck.set_xlabel('Energy (GeV)', color = 'k')
+axfigTestLatCheck.set_ylabel('Flux (c s$^-$$^1$ m$^-$$^2$ sr$^-$$^1$ MeV$^-$$^1$)', color = 'k')
+#"""
+
+#
+#///// ALTE LATITUDINI /////
+# 75°
+""" 
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_highLat, phi), color = 'blue', label=u'\u03B8$_{M}$ = 75$^{\circ}$')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_highLat_controlUP, phi), '--', color = 'blue', label=u'\u03B8$_{M}$ = (75 $\pm$ 3%)$^{\circ}$', mew = 0.5)
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_highLat_controlDWN, phi), '--', color = 'blue')
+axfigTestLatCheck.fill_between(T, proton_flux_Mizuno(T, h, theta_highLat_controlUP, phi), proton_flux_Mizuno(T, h, theta_highLat_controlDWN, phi), color='deepskyblue', alpha=0.7)
+"""
+
+#
+#///// MEDIE LATITUDINI /////
+# 66.56083333°
+"""
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat7, phi), color = 'lightseagreen', label=u'\u03B8$_{M}$ = 66.6$^{\circ}$')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat7_controlUP, phi), '--', label=u'\u03B8$_{M}$ = (66.6 $\pm$ 3%)$^{\circ}$', color = 'lightseagreen')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat7_controlDWN, phi), '--', color = 'lightseagreen')
+axfigTestLatCheck.fill_between(T, proton_flux_Mizuno(T, h, theta_middleLat7_controlDWN, phi), proton_flux_Mizuno(T, h, theta_middleLat7_controlUP, phi), color='turquoise', alpha=0.7)
+"""
+
+# 59.4°
+"""
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat6, phi), color = 'teal', label=u'\u03B8$_{M}$ = 59.4$^{\circ}$')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat6_controlUP, phi), '--', label=u'\u03B8$_{M}$ = (59.4 $\pm$ 3%)$^{\circ}$', color = 'teal')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat6_controlDWN, phi), '--', color = 'teal')
+axfigTestLatCheck.fill_between(T, proton_flux_Mizuno(T, h, theta_middleLat6_controlDWN, phi), proton_flux_Mizuno(T, h, theta_middleLat6_controlUP, phi), color='aquamarine', alpha=0.7)
+"""
+
+# 57.6° (SOLO PER CHECK ULTERIORE)
+"""
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat6, phi), color = 'teal', label=u'\u03B8$_{M}$ = 59.4$^{\circ}$')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat6_controlDWN, phi), '--', label=u'\u03B8$_{M}$ = 57.6$^{\circ}$', color = 'teal')
+axfigTestLatCheck.fill_between(T, proton_flux_Mizuno(T, h, theta_middleLat6_controlDWN, phi), proton_flux_Mizuno(T, h, theta_middleLat6, phi), color='aquamarine', alpha=0.7)
+"""
+
+# 55.0° (SOLO PER CHECK ULTERIORE)
+"""
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat_check2, phi), color = 'deeppink', label=u'\u03B8$_{M}$ = 57.0$^{\circ}$')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat_check2UP, phi), '--', label=u'\u03B8$_{M}$ = (57.0 $\pm$ 3%)$^{\circ}$', color = 'deeppink')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat_check2DWN, phi), '--', color = 'deeppink')
+axfigTestLatCheck.fill_between(T, proton_flux_Mizuno(T, h, theta_middleLat_check2DWN, phi), proton_flux_Mizuno(T, h, theta_middleLat_check2UP, phi), color='crimson', alpha=0.7)
+"""
+
+# 53.5° (SOLO PER CHECK ULTERIORE)
+"""
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat_check1, phi), color = 'orange', label=u'\u03B8$_{M}$ = 55.0$^{\circ}$')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat_check1UP, phi), '--', label=u'\u03B8$_{M}$ = (55.0 $\pm$ 3%)$^{\circ}$', color = 'orange')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat_check1DWN, phi), '--', color = 'orange')
+axfigTestLatCheck.fill_between(T, proton_flux_Mizuno(T, h, theta_middleLat_check1DWN, phi), proton_flux_Mizuno(T, h, theta_middleLat_check1UP, phi), color='gold', alpha=0.7)
+"""
+
+# 52.2° (SOLO PER CHECK ULTERIORE)
+"""
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat5_controlUP, phi), '--', label=u'\u03B8$_{M}$ = 53.7$^{\circ}$', color = 'seagreen')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat5, phi), color = 'seagreen', label=u'\u03B8$_{M}$ = 52.2$^{\circ}$')
+axfigTestLatCheck.fill_between(T, proton_flux_Mizuno(T, h, theta_middleLat5, phi), proton_flux_Mizuno(T, h, theta_middleLat5_controlUP, phi), color='mediumspringgreen', alpha=0.7)
+"""
+
+# 52.2°
+"""
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat5, phi), color = 'seagreen', label=u'\u03B8$_{M}$ = 52.2$^{\circ}$')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat5_controlUP, phi), '--', label=u'\u03B8$_{M}$ = (52.2 $\pm$ 3%)$^{\circ}$', color = 'seagreen')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat5_controlDWN, phi), '--', color = 'seagreen')
+axfigTestLatCheck.fill_between(T, proton_flux_Mizuno(T, h, theta_middleLat5_controlDWN, phi), proton_flux_Mizuno(T, h, theta_middleLat5_controlUP, phi), color='mediumspringgreen', alpha=0.7)
+"""
+
+# 45°
+"""
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat4, phi), color = 'forestgreen', label=u'\u03B8$_{M}$ = 45.0$^{\circ}$')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat4_controlUP, phi), '--', label=u'\u03B8$_{M}$ = (45.0 $\pm$ 3%)$^{\circ}$', color = 'forestgreen')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat4_controlDWN, phi), '--', color = 'forestgreen')
+axfigTestLatCheck.fill_between(T, proton_flux_Mizuno(T, h, theta_middleLat4_controlDWN, phi), proton_flux_Mizuno(T, h, theta_middleLat4_controlUP, phi), color='lime', alpha=0.7)
+"""
+
+# 37.8°
+""" 
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat3, phi), color = 'green', label=u'\u03B8$_{M}$ = 37.8$^{\circ}$')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat3_controlUP, phi), '--', label=u'\u03B8$_{M}$ = (37.8 $\pm$ 3%)$^{\circ}$',color = 'green')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat3_controlDWN, phi), '--', color = 'green')
+axfigTestLatCheck.fill_between(T, proton_flux_Mizuno(T, h, theta_middleLat3_controlDWN, phi), proton_flux_Mizuno(T, h, theta_middleLat3_controlUP, phi), color='limegreen', alpha=0.7)
+"""
+
+# 30.6°
+"""
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat2, phi), color = 'darkgreen', label=u'\u03B8$_{M}$ = 30.6$^{\circ}$')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat2_controlUP, phi), '--', label=u'\u03B8$_{M}$ = (30.6 $\pm$ 3%)$^{\circ}$', color = 'darkgreen')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat2_controlDWN, phi), '--', color = 'darkgreen')
+axfigTestLatCheck.fill_between(T, proton_flux_Mizuno(T, h, theta_middleLat2_controlDWN, phi), proton_flux_Mizuno(T, h, theta_middleLat2_controlUP, phi), color='forestgreen', alpha=0.7)
+"""
+
+# 23.43944444°
+"""
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat1, phi), color = 'darkolivegreen', label=u'\u03B8$_{M}$ = 23.4$^{\circ}$')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat1_controlUP, phi), '--', label=u'\u03B8$_{M}$ = (23.4 $\pm$ 3%)$^{\circ}$', color = 'darkolivegreen')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_middleLat1_controlDWN, phi), '--', color = 'darkolivegreen')
+axfigTestLatCheck.fill_between(T, proton_flux_Mizuno(T, h, theta_middleLat1_controlDWN, phi), proton_flux_Mizuno(T, h, theta_middleLat1_controlUP, phi), color='lightgreen', alpha=0.7)
+"""
+
+#
+#///// BASSE LATITUDINI /////
+# 15°
+"""
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_lowLat2, phi), color = 'red', label=u'\u03B8$_{M}$ = 15$^{\circ}$')
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_lowLat2_controlUP, phi), '--', color = 'red', label=u'\u03B8$_{M}$ = (15 $\pm$ 3%)$^{\circ}$', mew = 0.5)
+axfigTestLatCheck.plot(T, proton_flux_Mizuno(T, h, theta_lowLat2_controlDWN, phi), '--', color = 'red', mew = 0.5)
+axfigTestLatCheck.fill_between(T, proton_flux_Mizuno(T, h, theta_lowLat2_controlDWN, phi), proton_flux_Mizuno(T, h, theta_lowLat2_controlUP, phi), color='darkorange', alpha=0.7)
+"""
+
+"""
+axfigTestLatCheck.tick_params(axis='x', labelcolor = 'k')
+
+
+axfigTestLatCheck.set_axisbelow(True)
+axfigTestLatCheck.grid(which = 'major', linestyle = '-', linewidth = '0.3', color = 'k')
+axfigTestLatCheck.grid(which = 'minor', linestyle = '-', linewidth = '0.2', color = 'k')
+
+axfigTestLatCheck.minorticks_on()
+
+axfigTestLatCheck.tick_params(which='both', # Options for both major and minor ticks
+                top='False', # turn off top ticks
+                left='True', # turn off left ticks
+                right='False',  # turn off right ticks
+                bottom='True')
+
+plt.legend(loc=1, prop={'size': 7.8})
+"""
